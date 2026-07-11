@@ -2,10 +2,25 @@
   "name": "authentication-service",
   "version": "1.0.0",
   "description": "all kind of authentication will be handled from here",
-  "main": "index.js",
+  "type": "module",
+  "main": "server.ts",
   "scripts": {
+    "start": "node --env-file=.env --import tsx server.ts",
+    "dev": "node --env-file=.env --import tsx --watch server.ts",
+    "typecheck": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "ioredis": "^5.11.1",
+    "jose": "^6.2.3",
+    "pg": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
+  }
 }

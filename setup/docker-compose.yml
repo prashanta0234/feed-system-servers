@@ -1,3 +1,5 @@
+name: feed-system
+
 services:
   postgres-master:
     image: postgres:16
