@@ -12,6 +12,9 @@ services:
       # Replication credentials used by the slave
       REPLICATION_USER: ${REPLICATION_USER:-replicator}
       REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_password}
+      # Read-only role  will use it for slave read
+      READER_USER: ${READER_USER:-reader}
+      READER_PASSWORD: ${READER_PASSWORD:-reader_password}
     command: >
       postgres -c wal_level=replica -c max_wal_senders=10 -c max_replication_slots=10 -c hot_standby=on -c listen_addresses=*
     volumes:

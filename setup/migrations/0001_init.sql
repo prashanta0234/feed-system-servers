@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS "users" (
-  "id" bigint PRIMARY KEY,
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "username" varchar(50) UNIQUE NOT NULL,
   "email" varchar(255) UNIQUE NOT NULL,
   "password_hash" varchar NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 );
 
 CREATE TABLE IF NOT EXISTS "posts" (
-  "id" bigint PRIMARY KEY,
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "user_id" bigint NOT NULL,
   "content" text,
   "image_urls" jsonb,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS "posts" (
 );
 
 CREATE TABLE IF NOT EXISTS "post_reactions" (
-  "id" bigint PRIMARY KEY,
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "post_id" bigint NOT NULL,
   "user_id" bigint NOT NULL,
   "reaction_type" smallint NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS "post_reactions" (
 );
 
 CREATE TABLE IF NOT EXISTS "comments" (
-  "id" bigint PRIMARY KEY,
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "post_id" bigint NOT NULL,
   "user_id" bigint NOT NULL,
   "parent_comment_id" bigint,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS "comments" (
 );
 
 CREATE TABLE IF NOT EXISTS "comment_reactions" (
-  "id" bigint PRIMARY KEY,
+  "id" bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "comment_id" bigint NOT NULL,
   "user_id" bigint NOT NULL,
   "reaction_type" smallint NOT NULL,

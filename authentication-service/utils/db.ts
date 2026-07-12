@@ -51,12 +51,46 @@ function nextReplica(): Pool {
 
 type Params = ReadonlyArray<unknown>
 
+// query logging: on by default, disable with DB_LOG=false
+const DB_LOG = process.env.DB_LOG !== 'false'
+
+interface Queryable {
+  query<R extends QueryResultRow>(text: string, params?: unknown[]): Promise<QueryResult<R>>
+}
+
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+async function runQuery<R extends QueryResultRow>(
+  q: Queryable,
+  label: string,
+  text: string,
+  params?: Params,
+): Promise<QueryResult<R>> {
+  const start = performance.now()
+  try {
+    const result = await q.query<R>(text, params as unknown[])
+    if (DB_LOG) {
+      const ms = (performance.now() - start).toFixed(1)
+      const args = params && params.length ? ` -- ${JSON.stringify(params)}` : ''
+      console.log(`[db:${label}] ${oneLine(text)}${args} -> ${result.rowCount} row(s) in ${ms}ms`)
+    }
+    return result
+  } catch (err) {
+    const ms = (performance.now() - start).toFixed(1)
+    const args = params && params.length ? ` -- ${JSON.stringify(params)}` : ''
+    console.error(`[db:${label}] FAILED ${oneLine(text)}${args} after ${ms}ms:`, (err as Error).message)
+    throw err
+  }
+}
+
 // for every write
 function write<R extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: Params,
 ): Promise<QueryResult<R>> {
-  return master.query<R>(text, params as unknown[])
+  return runQuery<R>(master, 'write', text, params)
 }
 
 
@@ -65,13 +99,13 @@ async function read<R extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: Params,
 ): Promise<QueryResult<R>> {
-  if (replicas.length === 0) return master.query<R>(text, params as unknown[])
+  if (replicas.length === 0) return runQuery<R>(master, 'read', text, params)
   const pool = nextReplica()
   try {
-    return await pool.query<R>(text, params as unknown[])
+    return await runQuery<R>(pool, 'read', text, params)
   } catch (err) {
     console.error('[db] replica read failed, falling back to master:', (err as Error).message)
-    return master.query<R>(text, params as unknown[])
+    return runQuery<R>(master, 'read-fallback', text, params)
   }
 }
 
@@ -80,19 +114,28 @@ function strong<R extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: Params,
 ): Promise<QueryResult<R>> {
-  return master.query<R>(text, params as unknown[])
+  return runQuery<R>(master, 'strong', text, params)
 }
 
 // for transactions (read/write)
 async function tx<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await master.connect()
+  // wrap so queries issued inside the transaction are logged too
+  const logged: PoolClient = new Proxy(client, {
+    get(target, prop, receiver) {
+      if (prop === 'query') {
+        return (text: string, params?: Params) => runQuery(target, 'tx', text, params)
+      }
+      return Reflect.get(target, prop, receiver)
+    },
+  })
   try {
-    await client.query('BEGIN')
-    const result = await fn(client)
-    await client.query('COMMIT')
+    await runQuery(client, 'tx', 'BEGIN')
+    const result = await fn(logged)
+    await runQuery(client, 'tx', 'COMMIT')
     return result
   } catch (err) {
-    await client.query('ROLLBACK')
+    await runQuery(client, 'tx', 'ROLLBACK')
     throw err
   } finally {
     client.release()
