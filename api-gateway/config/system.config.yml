@@ -1,0 +1,20 @@
+# express-gateway system config
+# db is used by EG's own credential store AND by the rate-limit policy.
+# emulate: true keeps everything in-memory (no external Redis needed for now).
+db:
+  redis:
+    emulate: true
+    namespace: EG
+
+crypto:
+  cipher: aes256
+  saltRounds: 10
+
+session:
+  secret: ${SESSION_SECRET:-change-me-in-prod}
+  resave: false
+  saveUninitialized: false
+
+# custom cookie-auth policy lives in ./plugins/express-gateway-plugin-cookie-auth
+plugins:
+  cookie-auth: {}

@@ -1,0 +1,7 @@
+{
+  "name": "express-gateway-plugin-cookie-auth",
+  "version": "1.0.0",
+  "description": "EG policy that lifts an auth cookie into an Authorization: Bearer header so the jwt policy can verify it.",
+  "main": "index.js",
+  "license": "ISC"
+}

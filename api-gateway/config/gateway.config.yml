@@ -1,0 +1,97 @@
+global_logger:
+  - log: &global_logger
+      - action:
+          message: '${req.method} ${req.originalUrl}'
+
+global_cors:
+  - cors: &cors
+      - action:
+          origin: true
+          credentials: true
+
+domains:
+  client_url: &client_url '*'
+  auth_url: &auth_url ${AUTH_SERVICE_URL:-http://localhost:4000}
+  post_url: &post_url ${POST_SERVICE_URL:-http://localhost:5000}
+
+http:
+  port: ${GATEWAY_PORT:-8080}
+
+admin:
+  port: ${ADMIN_PORT:-9876}
+  host: localhost
+
+
+apiEndpoints:
+  auth:
+    host: *client_url
+    paths:
+      - '/api/:version/auth'
+      - '/api/:version/auth/*'
+  post:
+    host: *client_url
+    paths:
+      - '/api/:version/posts'
+      - '/api/:version/posts/*'
+
+serviceEndpoints:
+  authService:
+    url: *auth_url
+  postService:
+    url: *post_url
+
+policies:
+  - cors
+  - log
+  - cookie-auth
+  - jwt
+  - rate-limit
+  - proxy
+
+pipelines:
+  authPipeline:
+    apiEndpoints:
+      - auth
+    policies:
+      - cors: *cors
+      - log: *global_logger
+      - rate-limit:
+          - action:
+              max: ${AUTH_MAX_REQ:-20}
+              windowMs: ${AUTH_WINDOW_MS:-60000}
+              delayMs: 0
+              rateLimitBy: '${req.ip}'
+              message: 'Too many auth requests, please slow down.'
+      - proxy:
+          - action:
+              serviceEndpoint: authService
+              changeOrigin: true
+
+  postPipeline:
+    apiEndpoints:
+      - post
+    policies:
+      - cors: *cors
+      - log: *global_logger
+      - rate-limit:
+          - action:
+              max: ${POST_MAX_REQ:-100}
+              windowMs: ${POST_WINDOW_MS:-60000}
+              delayMs: 0
+              rateLimitBy: '${req.ip}'
+              message: 'Too many requests, please slow down.'
+      - cookie-auth:
+          - action:
+              cookieName: access_token
+      - jwt:
+          - action:
+              secretOrPublicKeyFile: ./public.pem
+              jwtExtractor: authBearer
+              checkCredentialExistence: false
+              issuer: authentication-service
+              algorithms:
+                - RS256
+      - proxy:
+          - action:
+              serviceEndpoint: postService
+              changeOrigin: true

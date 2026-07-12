@@ -1,11 +1,17 @@
 {
   "name": "api-gateway",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "API gateway (express-gateway): rate limiting, RS256 JWT verification, and proxying to auth/post services.",
+  "dependencies": {
+    "express-gateway": "^1.16.11",
+    "express-gateway-plugin-cookie-auth": "file:./plugins/express-gateway-plugin-cookie-auth"
+  }
 }

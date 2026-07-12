@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+
+# keys / secrets (public.pem is public and IS committed)
+private.pem
+*.key
