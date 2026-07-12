@@ -6,16 +6,30 @@
   "scripts": {
     "start": "node --env-file=.env --import tsx server.ts",
     "dev": "node --env-file=.env --import tsx --watch server.ts",
+    "worker": "node --env-file=.env --import tsx image_uploader/worker/image.worker.ts",
+    "worker:dev": "node --env-file=.env --import tsx --watch image_uploader/worker/image.worker.ts",
     "typecheck": "tsc --noEmit"
   },
   "author": "Prashanta chakraborty",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1085.0",
+    "@aws-sdk/lib-storage": "^3.1085.0",
+    "bullmq": "^5.80.2",
+    "busboy": "^1.6.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
     "ioredis": "^5.11.1",
-    "pg": "^8.22.0"
+    "jose": "^6.2.3",
+    "pg": "^8.22.0",
+    "sharp": "^0.35.3",
+    "ulid": "^3.0.2"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
     "tsx": "^4.23.0",
