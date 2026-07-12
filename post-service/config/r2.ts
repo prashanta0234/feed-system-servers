@@ -20,16 +20,14 @@ if (!R2_PUBLIC_URL) {
 const BUCKET = R2_BUCKET
 const PUBLIC_BASE = R2_PUBLIC_URL.replace(/\/+$/, '')
 
-// The "folder" inside the bucket that every image lives under. One place to
-// change it; strip any leading/trailing slashes so joins are clean.
+
 const KEY_PREFIX = (process.env.R2_KEY_PREFIX || 'images').replace(/^\/+|\/+$/g, '')
 
-/** Build an object key: `<prefix>/<id>/<filename>` (e.g. images/01J.../original.jpg). */
 export function keyFor(id: string, filename: string): string {
   return `${KEY_PREFIX}/${id}/${filename}`
 }
 
-// R2 speaks the S3 API. Region must be "auto".
+// R2 speaks the S3 API.
 const s3 = new S3Client({
   region: 'auto',
   endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -39,15 +37,11 @@ const s3 = new S3Client({
   },
 })
 
-/** Public URL for a stored object key. */
 export function publicUrl(key: string): string {
   return `${PUBLIC_BASE}/${key}`
 }
 
-/**
- * Stream/buffer a body to R2. Uses lib-storage's Upload so Node streams are
- * sent as a multipart upload without buffering the whole thing in memory.
- */
+
 export async function put(
   key: string,
   body: Readable | Buffer,
@@ -66,7 +60,6 @@ export async function put(
   return key
 }
 
-/** Fetch an object's bytes back from R2 (used by the worker to read the original). */
 export async function getBuffer(key: string): Promise<Buffer> {
   const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
   const body = res.Body as Readable
